@@ -2,7 +2,6 @@ const CACHE_NAME = "ic-offline-map-v1";
 const PREFIX = "/ICOfflineMap/";
 
 const OFFLINE_FILES = [
-  PREFIX,
   PREFIX + "index.html",
   PREFIX + "manifest.json",
   PREFIX + "churches.geojson",
