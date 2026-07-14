@@ -103,6 +103,13 @@
   </script>
 
   <script>
+  navigator.serviceWorker.addEventListener("message", event => {
+    console.log("SW says:", event.data);
+  });
+  </script>
+
+
+  <script>
   function showProgressBar(total) {
     const bar = document.getElementById("tileProgressBar");
     const box = document.getElementById("tileProgress");
