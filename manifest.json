@@ -4,14 +4,20 @@
   "start_url": "/ICOfflineMap/index.html",
   "scope": "/ICOfflineMap/",
   "display": "standalone",
+  "display_override": ["standalone"]
   "background_color": "#ffffff",
   "theme_color": "#2b4b8b",
   "icons": [
     {
       "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
-      "sizes": "64x64",
+      "sizes": "609x609",
+      "type": "image/png"
+    },
+    {
+      "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
+      "sizes": "192x192",
       "type": "image/png"
     }
   ]
 }
-  
+
