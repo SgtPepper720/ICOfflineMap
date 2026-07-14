@@ -14,69 +14,17 @@ const OFFLINE_FILES = [
   PREFIX + "leaflet/images/marker-shadow.png"
 ];
 
-// Install and cache core files and tiles, with progress indicator
+// Install and cache core files
 self.addEventListener("install", event => {
   event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-
-
-      console.log("SW install running");
-
-      // Pre-cache app shell
-      await cache.addAll(OFFLINE_FILES);
-
-
-
-      // Fetch tile list
-      const response = await fetch("/ICOfflineMap/tiles.json");
-      const tileList = await response.json();
-
-      let completed = 0;
-      const total = tileList.length;
-
-      // Send initial message
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: "tile-cache-start", total });
-          
-        });
-      });
-
-      // Cache tiles one by one
-      for (const url of tileList) {
-        try {
-          await cache.add(url);
-        } catch (e) {
-          // Ignore failures (missing tiles etc.)
-        }
-
-        completed++;
-
-        console.log("Caching tile:", url);
-
-
-        // Send progress update
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: "tile-cache-progress",
-              completed,
-              total
-            });
-          });
-        });
-      }
-
-      // Send completion message
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: "tile-cache-complete" });
-        });
-      });
-    })()
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(OFFLINE_FILES);
+    })
   );
+
+  self.skipWaiting();
 });
+
 
 
 // Fetch handler: serve from cache, then network, and cache tiles dynamically

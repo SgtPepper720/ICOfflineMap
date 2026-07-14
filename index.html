@@ -16,7 +16,7 @@
     #map { width: 100%; height: 100%; }
     #tileProgress {
       position: absolute;
-      top: 0;
+      top: 40px;
       left: 0;
       z-index: 9999;
       background: white;
@@ -32,6 +32,12 @@
     <div id="tileProgressText">Preparing offline map…</div>
     <progress id="tileProgressBar" value="0" max="100"></progress>
   </div>
+
+<div id="offlineStatus" style="position:absolute; top:0; left:0; z-index:9999; background:white; padding:10px; font-family:sans-serif;">
+  <span id="offlineMessage">Checking offline map status…</span>
+  <button id="redownloadBtn" style="margin-left:10px;">Re-download tiles</button>
+</div>
+
 
   <div id="map"></div>
 
@@ -85,33 +91,74 @@
       });
   </script>
 
-  <script>
-  // ⭐ Attach listener BEFORE registration ⭐
-  navigator.serviceWorker.addEventListener("message", event => {
-    console.log("SW says:", event.data);
+<script>
+// script for page-side tile caching logic 
+  async function getExpectedTileCount() {
+    const response = await fetch("/ICOfflineMap/tiles.json");
+    const tileList = await response.json();
+    return tileList.length;
+  }
 
-    const msg = event.data;
+  async function checkTileCache() {
+    const cache = await caches.open("ic-offline-map-v1");
+    const keys = await cache.keys();
+    const expected = await getExpectedTileCount();
 
-    if (msg.type === "tile-cache-start") {
-      showProgressBar(msg.total);
+    const offlineMessage = document.getElementById("offlineMessage");
+
+    if (keys.filter(k => k.url.includes("/tiles/")).length >= expected) {
+      offlineMessage.textContent = "✔ Offline map ready";
+    } else {
+      offlineMessage.textContent = "Downloading offline map…";
+      precacheTiles();
+    }
+  }
+
+  async function precacheTiles() {
+    const cache = await caches.open("ic-offline-map-v1");
+
+    const response = await fetch("/ICOfflineMap/tiles.json");
+    const tileList = await response.json();
+
+    let completed = 0;
+    const total = tileList.length;
+
+    showProgressBar(total);
+
+    for (const url of tileList) {
+      try {
+        await cache.add(url);
+      } catch (e) {
+        console.log("Failed to cache tile:", url);
+      }
+
+      completed++;
+      updateProgressBar(completed, total);
     }
 
-    if (msg.type === "tile-cache-progress") {
-      updateProgressBar(msg.completed, msg.total);
-    }
+    hideProgressBar();
+    document.getElementById("offlineMessage").textContent = "✔ Offline map ready";
+  }
 
-    if (msg.type === "tile-cache-complete") {
-      hideProgressBar();
-    }
+  document.getElementById("redownloadBtn").addEventListener("click", async () => {
+    const cache = await caches.open("ic-offline-map-v1");
+
+    await deleteOnlyTiles(cache);
+
+    document.getElementById("offlineMessage").textContent = "Re-downloading offline map…";
+    precacheTiles();
   });
+</script>
 
+
+  <script>
   // ⭐ Now register the service worker ⭐
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/ICOfflineMap/service-worker.js")
-      .then(reg => {
-        console.log("Service worker registered");
-      });
+      .then(() => console.log("Service worker registered"));
   }
+
+  checkTileCache();
   </script>
 
 
@@ -142,6 +189,18 @@
     const box = document.getElementById("tileProgress");
     box.style.display = "none";
   }
+
+
+  async function deleteOnlyTiles(cache) {
+  const keys = await cache.keys();
+
+  for (const request of keys) {
+    if (request.url.includes("/tiles/")) {
+      await cache.delete(request);
+    }
+  }
+}
+
   </script>
 
 
