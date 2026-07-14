@@ -11,13 +11,16 @@
     {
       "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
       "sizes": "609x609",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
+
   ]
 }
 
