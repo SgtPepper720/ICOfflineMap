@@ -20,8 +20,13 @@ self.addEventListener("install", event => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
+
+      console.log("SW install running");
+
       // Pre-cache app shell
       await cache.addAll(OFFLINE_FILES);
+
+
 
       // Fetch tile list
       const response = await fetch("/ICOfflineMap/tiles.json");
@@ -34,6 +39,7 @@ self.addEventListener("install", event => {
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           client.postMessage({ type: "tile-cache-start", total });
+          
         });
       });
 
@@ -46,6 +52,9 @@ self.addEventListener("install", event => {
         }
 
         completed++;
+
+        console.log("Caching tile:", url);
+
 
         // Send progress update
         self.clients.matchAll().then(clients => {
