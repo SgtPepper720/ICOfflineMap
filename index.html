@@ -133,6 +133,7 @@
     const bar = document.getElementById("tileProgressBar");
     const text = document.getElementById("tileProgressText");
 
+    console.log("Progress bar updating");
     bar.value = completed;
     text.textContent = `Caching tiles: ${completed} / ${total}`;
   }
