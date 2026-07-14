@@ -3,7 +3,7 @@ const PREFIX = "/ICOfflineMap/";
 
 const OFFLINE_FILES = [
   PREFIX + "index.html",
-  PREFIX + "manifest.json",
+  PREFIX + "manifest-v2.json",
   PREFIX + "churches.geojson",
   PREFIX + "leaflet/leaflet.css",
   PREFIX + "leaflet/leaflet.js",

@@ -1,0 +1,26 @@
+{
+  "name": "IC Offline Map",
+  "short_name": "IC Map",
+  "start_url": "/ICOfflineMap/index.html",
+  "scope": "/ICOfflineMap/",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "background_color": "#ffffff",
+  "theme_color": "#2b4b8b",
+  "icons": [
+    {
+      "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
+      "sizes": "609x609",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ICOfflineMap/images/IC-Circle-Icon-filled.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+
+  ]
+}
+
