@@ -1,6 +1,7 @@
 {
   "name": "IC Offline Map",
   "short_name": "IC Map",
+  "id": "/ICOfflineMap/index.html", 
   "start_url": "/ICOfflineMap/index.html",
   "scope": "/ICOfflineMap/",
   "display": "standalone",
