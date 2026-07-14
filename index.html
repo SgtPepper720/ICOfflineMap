@@ -69,5 +69,12 @@
         }).addTo(map);
       });
   </script>
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/ICOfflineMap/service-worker.js');
+  }
+</script>
+
 </body>
 </html>
