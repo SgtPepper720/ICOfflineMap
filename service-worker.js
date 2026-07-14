@@ -10,6 +10,7 @@ const OFFLINE_FILES = [
   PREFIX + "leaflet/images/marker-icon.png",
   PREFIX + "leaflet/images/marker-icon-2x.png",
   PREFIX + "images/IC-Circle-Icon-filled.png",
+  PREFIX + "images/IC-Circle-Icon-filled-192.png",
   PREFIX + "leaflet/images/marker-shadow.png"
 ];
 
