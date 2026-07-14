@@ -77,36 +77,34 @@
   </script>
 
   <script>
+  // ⭐ Attach listener BEFORE registration ⭐
+  navigator.serviceWorker.addEventListener("message", event => {
+    console.log("SW says:", event.data);
+
+    const msg = event.data;
+
+    if (msg.type === "tile-cache-start") {
+      showProgressBar(msg.total);
+    }
+
+    if (msg.type === "tile-cache-progress") {
+      updateProgressBar(msg.completed, msg.total);
+    }
+
+    if (msg.type === "tile-cache-complete") {
+      hideProgressBar();
+    }
+  });
+
+  // ⭐ Now register the service worker ⭐
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/ICOfflineMap/service-worker.js")
       .then(reg => {
         console.log("Service worker registered");
-
-        // ⭐ ADD THIS LISTENER RIGHT HERE ⭐
-        navigator.serviceWorker.addEventListener("message", event => {
-          const msg = event.data;
-
-          if (msg.type === "tile-cache-start") {
-            showProgressBar(msg.total);
-          }
-
-          if (msg.type === "tile-cache-progress") {
-            updateProgressBar(msg.completed, msg.total);
-          }
-
-          if (msg.type === "tile-cache-complete") {
-            hideProgressBar();
-          }
-        });
       });
   }
   </script>
 
-  <script>
-  navigator.serviceWorker.addEventListener("message", event => {
-    console.log("SW says:", event.data);
-  });
-  </script>
 
 
   <script>
