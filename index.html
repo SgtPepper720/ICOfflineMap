@@ -25,6 +25,23 @@
       border-radius: 4px;
     }
 
+    #logoOverlay {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 10000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #logoOverlay img {
+      max-width: 120px;
+      height: auto;
+      display: block;
+      opacity: 0.75;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+    }
   </style>
 </head>
 
@@ -40,6 +57,9 @@
   <button id="redownloadBtn" style="margin-left:10px;">Re-download tiles</button>
 </div>
 
+<div id="logoOverlay">
+  <img src="/ICOfflineMap/images/IC-Circle-Icon-filled.png" alt="Logo" />
+</div>
 
   <div id="map"></div>
 
