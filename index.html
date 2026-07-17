@@ -35,12 +35,72 @@
       align-items: center;
       justify-content: center;
     }
+    #logoOverlay > button,
+    #logoOverlay > div,
+    #logoOverlay > img {
+      pointer-events: auto;
+    }
     #logoOverlay img {
       max-width: 120px;
       height: auto;
       display: block;
       opacity: 0.75;
       filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+    }
+
+    #menuToggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      margin-left: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      color: #333;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    #menuToggle:hover {
+      background: #f4f4f4;
+    }
+
+    #menuPanel {
+      position: absolute;
+      top: 52px;
+      left: 10px;
+      z-index: 10001;
+      width: 240px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+    }
+
+    #menuPanel button {
+      width: 100%;
+      margin: 4px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      color: #111;
+      padding: 8px 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #menuPanel button:hover {
+      background: #f6f6f6;
+    }
+
+    #menuPanel.show {
+      display: flex;
     }
   </style>
 </head>
@@ -54,10 +114,16 @@
 
 <div id="offlineStatus" style="position:absolute; bottom:10px; right:10px; z-index:9999; background:white; padding:10px; font-family:sans-serif; border:1px solid #ccc; border-radius:4px;">
   <span id="offlineMessage">Checking offline map status…</span>
-  <button id="redownloadBtn" style="margin-left:10px;">Re-download tiles</button>
 </div>
 
 <div id="logoOverlay">
+  <button id="menuToggle" aria-haspopup="true" aria-expanded="false">☰</button>
+  <div id="menuPanel" role="menu" aria-labelledby="menuToggle">
+    <button id="refreshTilesBtn" role="menuitem">Re-download map tiles</button>
+    <button id="refreshChurchDataBtn" role="menuitem">Refresh church data</button>
+    <button id="refreshAppShellBtn" role="menuitem">Refresh app shell</button>
+    <button id="refreshPwaBtn" role="menuitem">Refresh full PWA</button>
+  </div>
   <img src="/ICOfflineMap/images/IC-Circle-Icon-filled.png" alt="Logo" />
 </div>
 
@@ -86,31 +152,37 @@
     // -------------------------------
     // 3. Load churches.geojson
     // -------------------------------
-    fetch('/ICOfflineMap/churches.geojson')
-      .then(r => r.json())
-      .then(data => {
-        L.geoJSON(data, {
-          pointToLayer: (feature, latlng) => {
-            return L.marker(latlng);
-          },
-          onEachFeature: (feature, layer) => {
-            const p = feature.properties;
+    let churchLayer = null;
 
-            const churchName = p["Sort Name"] || "Unnamed church";
-            const denom = p["Denom"] ? p["Denom"] : "unavailable";
-            const postcode = p["Church/Organisation Profile: Church Postcode"] || "unavailable";
+    async function loadChurches() {
+      const source = '/ICOfflineMap/churches.geojson';
+      const response = await fetch(source);
+      const data = await response.json();
 
-            const html = `
+      if (churchLayer) {
+        map.removeLayer(churchLayer);
+      }
+
+      churchLayer = L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => L.marker(latlng),
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          const churchName = p["Sort Name"] || "Unnamed church";
+          const denom = p["Denom"] ? p["Denom"] : "unavailable";
+          const postcode = p["Church/Organisation Profile: Church Postcode"] || "unavailable";
+
+          const html = `
                 <strong>Church:</strong> ${churchName}<br>
                 <strong>Denomination:</strong> ${denom}<br>
                 <strong>Postcode:</strong> ${postcode}
             `;
 
-            layer.bindPopup(html);
-            }
+          layer.bindPopup(html);
+        }
+      }).addTo(map);
+    }
 
-        }).addTo(map);
-      });
+    loadChurches();
   </script>
 
 <script>
@@ -121,12 +193,33 @@
     return tileList.length;
   }
 
+  async function requestPersistentStorage() {
+    if (!navigator.storage || !navigator.storage.persist) {
+      console.warn("Persistent storage API not supported in this browser.");
+      return false;
+    }
+
+    if (await navigator.storage.persisted()) {
+      console.log("Storage already persisted.");
+      return true;
+    }
+
+    const granted = await navigator.storage.persist();
+    console.log("Persistent storage granted:", granted);
+    return granted;
+  }
+
   async function checkTileCache() {
     const cache = await caches.open("ic-offline-map-v1");
     const keys = await cache.keys();
     const expected = await getExpectedTileCount();
 
     const offlineMessage = document.getElementById("offlineMessage");
+
+    const persisted = await requestPersistentStorage();
+    if (!persisted) {
+      console.warn("Persistent storage was not granted; cached tiles may be evicted under storage pressure.");
+    }
 
     if (keys.filter(k => k.url.includes("/tiles/")).length >= expected) {
       offlineMessage.textContent = "✔ Offline map ready";
@@ -222,6 +315,147 @@
     }
   }
 }
+
+  const SHELL_FILES = [
+    "/ICOfflineMap/index.html",
+    "/ICOfflineMap/leaflet/leaflet.css",
+    "/ICOfflineMap/leaflet/leaflet.js",
+    "/ICOfflineMap/service-worker.js",
+    "/ICOfflineMap/manifest-v2.json"
+  ];
+
+  function toggleMenu() {
+    const menu = document.getElementById("menuPanel");
+    const toggle = document.getElementById("menuToggle");
+    const isExpanded = menu.classList.contains("show");
+    menu.classList.toggle("show", !isExpanded);
+    toggle.setAttribute("aria-expanded", String(!isExpanded));
+  }
+
+  function closeMenu() {
+    const menu = document.getElementById("menuPanel");
+    const toggle = document.getElementById("menuToggle");
+    menu.classList.remove("show");
+    toggle.setAttribute("aria-expanded", "false");
+  }
+
+  function showStatus(message) {
+    document.getElementById("offlineMessage").textContent = message;
+  }
+
+  async function refreshShellCache() {
+    const cache = await caches.open("ic-offline-map-v1");
+
+    for (const url of SHELL_FILES) {
+      const cacheBustedUrl = `${url}?cache-bust=${Date.now()}`;
+      const response = await fetch(cacheBustedUrl, { cache: "reload" });
+      if (response.ok) {
+        await cache.put(url, response.clone());
+      }
+    }
+  }
+
+  async function refreshTiles() {
+    const cache = await caches.open("ic-offline-map-v1");
+    await deleteOnlyTiles(cache);
+    showStatus("Re-downloading offline map tiles…");
+    await precacheTiles();
+  }
+
+  async function refreshChurchData() {
+    const cache = await caches.open("ic-offline-map-v1");
+    const url = "/ICOfflineMap/churches.geojson";
+
+    try {
+      showStatus("Refreshing church data…");
+      const response = await fetch(`${url}?cache-bust=${Date.now()}`, { cache: "reload" });
+      if (!response.ok) throw new Error("Church data fetch failed");
+      await cache.put(url, response.clone());
+      await loadChurches();
+      showStatus("✔ Church data refreshed");
+    } catch (error) {
+      console.error(error);
+      showStatus("Failed to refresh church data");
+    }
+  }
+
+  async function refreshAppShell() {
+    try {
+      showStatus("Refreshing app shell…");
+      await refreshShellCache();
+      showStatus("✔ App shell updated");
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showStatus("Failed to refresh app shell");
+    }
+  }
+
+  async function refreshFullPWA() {
+    try {
+      showStatus("Refreshing full PWA…");
+
+      if (navigator.serviceWorker) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          await registration.update();
+        }
+      }
+
+      await refreshShellCache();
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        if (cacheName === "ic-offline-map-v1") {
+          await caches.delete(cacheName);
+        }
+      }
+
+      showStatus("✔ Full PWA refresh complete");
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      showStatus("Failed to refresh full PWA");
+    }
+  }
+
+  document.getElementById("menuToggle").addEventListener("click", event => {
+    event.stopPropagation();
+    toggleMenu();
+  });
+
+  document.getElementById("refreshTilesBtn").addEventListener("click", async () => {
+    closeMenu();
+    await refreshTiles();
+  });
+
+  document.getElementById("refreshChurchDataBtn").addEventListener("click", async () => {
+    closeMenu();
+    await refreshChurchData();
+  });
+
+  document.getElementById("refreshAppShellBtn").addEventListener("click", async () => {
+    closeMenu();
+    await refreshAppShell();
+  });
+
+  document.getElementById("refreshPwaBtn").addEventListener("click", async () => {
+    closeMenu();
+    await refreshFullPWA();
+  });
+
+  document.addEventListener("click", event => {
+    const menu = document.getElementById("menuPanel");
+    const toggle = document.getElementById("menuToggle");
+    if (!menu.contains(event.target) && event.target !== toggle) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeMenu();
+    }
+  });
 
   </script>
 
