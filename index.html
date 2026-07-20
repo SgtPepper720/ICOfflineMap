@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="manifest" href="/ICOfflineMap/manifest-v2.json">
-
+  <meta name="app-shell-version" content="2.0.0">
 
   <link rel="stylesheet" href="/ICOfflineMap/leaflet/leaflet.css">
   <script src="/ICOfflineMap/leaflet/leaflet.js"></script>
@@ -105,6 +105,96 @@
       display: flex;
     }
 
+    #aboutOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(3px);
+    }
+
+    #aboutOverlay.hidden {
+      display: none;
+    }
+
+    #aboutPanel {
+      width: min(560px, calc(100% - 32px));
+      max-height: calc(100% - 40px);
+      overflow-y: auto;
+      background: rgba(255,255,255,0.93);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 16px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+      padding: 24px;
+      position: relative;
+      color: #111;
+      font-family: sans-serif;
+    }
+
+    #aboutCloseBtn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.08);
+      color: #111;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    #aboutHeader {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    #aboutHeader img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    #aboutHeader h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    #aboutHeader .about-subtitle {
+      margin: 4px 0 0;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
+    #aboutContent p {
+      margin: 0 0 14px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .about-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .about-section h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .about-section p {
+      margin: 4px 0;
+    }
+
     #logoOverlay {
       position: absolute;
       top: 10px;
@@ -144,6 +234,35 @@
       <button id="refreshChurchDataBtn" role="menuitem">Refresh church data</button>
       <button id="refreshAppShellBtn" role="menuitem">Refresh app shell</button>
       <button id="refreshPwaBtn" role="menuitem">Refresh full Web App</button>
+      <button id="aboutBtn" role="menuitem">About</button>
+    </div>
+  </div>
+</div>
+
+<div id="aboutOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div id="aboutPanel">
+    <button id="aboutCloseBtn" aria-label="Close about dialog">×</button>
+    <div id="aboutHeader">
+      <img src="/ICOfflineMap/images/IC-Circle-Icon-filled.png" alt="App logo" />
+      <div>
+        <h2 id="aboutTitle">IC Offline Map</h2>
+        <p class="about-subtitle">Offline-friendly mapping for inclusive churches.</p>
+      </div>
+    </div>
+    <div id="aboutContent">
+      <p>This web app provides an offline-friendly map of Inclusive Church locations in the UK, where the full map is downloaded to your device (around 100MB). </P>
+      <p>Church information is based on the Inclusive Church database, which is undergoing updates and cleanup at this time.</p>
+      <P>To install this to your phone, go to your browser menu and select "Add to Home Screen" (or similar). You can then use the app offline, and refresh the data when you have an internet connection.        </p>
+      <div class="about-section">
+        <h3>App shell</h3>
+        <p>Version: <span id="appShellVersion">unknown</span></p>
+        <p>Last refreshed: <span id="appShellLastRefreshed">never</span></p>
+      </div>
+      <div class="about-section">
+        <h3>Church data</h3>
+        <p>Version: <span id="churchDataVersion">unknown</span></p>
+        <p>Last refreshed: <span id="churchDataLastRefreshed">never</span></p>
+      </div>
     </div>
   </div>
 </div>
@@ -155,6 +274,11 @@
   <div id="map"></div>
 
   <script>
+    // -------------------------------
+    // App version metadata
+    // -------------------------------
+    const APP_SHELL_VERSION = document.querySelector('meta[name="app-shell-version"]')?.content || "2.0.0";
+
     // -------------------------------
     // 1. Create the map
     // -------------------------------
@@ -179,16 +303,25 @@
     // -------------------------------
     let churchLayer = null;
 
-    async function loadChurches() {
+    async function loadChurches(data = null) {
       const source = '/ICOfflineMap/churches.geojson';
-      const response = await fetch(source);
-      const data = await response.json();
+      let responseData = data;
+
+      if (!responseData) {
+        const response = await fetch(source);
+        responseData = await response.json();
+        const version = responseData.version || getVersionFromResponse(response) || "unknown";
+        setChurchDataVersion(version);
+        setChurchDataLastRefresh(new Date().toISOString());
+      } else if (responseData.version) {
+        setChurchDataVersion(responseData.version);
+      }
 
       if (churchLayer) {
         map.removeLayer(churchLayer);
       }
 
-      churchLayer = L.geoJSON(data, {
+      churchLayer = L.geoJSON(responseData, {
         pointToLayer: (feature, latlng) => L.marker(latlng),
         onEachFeature: (feature, layer) => {
           const p = feature.properties;
@@ -212,6 +345,101 @@
 
 <script>
 // script for page-side tile caching logic 
+  const VERSION_STORAGE_KEY = "ICOfflineMapVersionInfo";
+
+  function getStoredVersionInfo() {
+    try {
+      const raw = localStorage.getItem(VERSION_STORAGE_KEY);
+      if (!raw) return {
+        shell: {},
+        shellLastRefresh: null,
+        churchData: null,
+        churchDataLastRefresh: null
+      };
+      return JSON.parse(raw);
+    } catch (error) {
+      console.warn("Failed to parse stored version info", error);
+      return {
+        shell: {},
+        shellLastRefresh: null,
+        churchData: null,
+        churchDataLastRefresh: null
+      };
+    }
+  }
+
+  function saveStoredVersionInfo(info) {
+    localStorage.setItem(VERSION_STORAGE_KEY, JSON.stringify(info));
+  }
+
+  function setShellVersion(fileUrl, version) {
+    const info = getStoredVersionInfo();
+    info.shell[fileUrl] = version || info.shell[fileUrl] || "unknown";
+    saveStoredVersionInfo(info);
+  }
+
+  function setShellLastRefresh(date) {
+    const info = getStoredVersionInfo();
+    info.shellLastRefresh = date;
+    saveStoredVersionInfo(info);
+  }
+
+  function setChurchDataVersion(version) {
+    const info = getStoredVersionInfo();
+    info.churchData = version || info.churchData || "unknown";
+    saveStoredVersionInfo(info);
+  }
+
+  function ensureShellVersionInfo() {
+    const info = getStoredVersionInfo();
+    if (!info.shell || Object.keys(info.shell).length === 0) {
+      info.shell = info.shell || {};
+      info.shell["/ICOfflineMap/index.html"] = APP_SHELL_VERSION;
+      saveStoredVersionInfo(info);
+    } else if (!info.shell["/ICOfflineMap/index.html"]) {
+      info.shell["/ICOfflineMap/index.html"] = APP_SHELL_VERSION;
+      saveStoredVersionInfo(info);
+    }
+  }
+
+  function setChurchDataLastRefresh(date) {
+    const info = getStoredVersionInfo();
+    info.churchDataLastRefresh = date;
+    saveStoredVersionInfo(info);
+  }
+
+  function getVersionFromResponse(response) {
+    if (!response || !response.headers) return null;
+    const versionHeader = response.headers.get("x-version") || response.headers.get("etag") || response.headers.get("last-modified");
+    return versionHeader ? versionHeader.replace(/^"|"$/g, "") : null;
+  }
+
+  function applyVersionInfoToAbout() {
+    const info = getStoredVersionInfo();
+    const shellVersionElement = document.getElementById("appShellVersion");
+    const shellLastRefreshedElement = document.getElementById("appShellLastRefreshed");
+    const churchVersionElement = document.getElementById("churchDataVersion");
+    const churchLastRefreshedElement = document.getElementById("churchDataLastRefreshed");
+
+    const shellVersions = info.shell && Object.keys(info.shell).length > 0
+      ? Object.entries(info.shell).map(([file, version]) => `${file}: ${version}`).join("; ")
+      : APP_SHELL_VERSION;
+
+    shellVersionElement.textContent = shellVersions;
+    shellLastRefreshedElement.textContent = info.shellLastRefresh ? new Date(info.shellLastRefresh).toLocaleString() : "never";
+    churchVersionElement.textContent = info.churchData || "unknown";
+    churchLastRefreshedElement.textContent = info.churchDataLastRefresh ? new Date(info.churchDataLastRefresh).toLocaleString() : "never";
+  }
+
+  function openAboutOverlay() {
+    applyVersionInfoToAbout();
+    document.getElementById("aboutOverlay").classList.remove("hidden");
+  }
+
+  function closeAboutOverlay() {
+    document.getElementById("aboutOverlay").classList.add("hidden");
+  }
+
   async function getExpectedTileCount() {
     const response = await fetch("/ICOfflineMap/tiles.json");
     const tileList = await response.json();
@@ -245,6 +473,8 @@
     if (!persisted) {
       console.warn("Persistent storage was not granted; cached tiles may be evicted under storage pressure.");
     }
+
+    ensureShellVersionInfo();
 
     if (keys.filter(k => k.url.includes("/tiles/")).length >= expected) {
       offlineMessage.textContent = "✔ Offline map ready";
@@ -291,6 +521,7 @@
   }
 
   checkTileCache();
+  ensureShellVersionInfo();
   </script>
 
 
@@ -368,8 +599,11 @@
       const response = await fetch(cacheBustedUrl, { cache: "reload" });
       if (response.ok) {
         await cache.put(url, response.clone());
+        const version = getVersionFromResponse(response) || (url === "/ICOfflineMap/index.html" ? APP_SHELL_VERSION : "unknown");
+        setShellVersion(url, version);
       }
     }
+    setShellLastRefresh(new Date().toISOString());
   }
 
   async function refreshTiles() {
@@ -387,8 +621,14 @@
       showStatus("Refreshing church data…");
       const response = await fetch(`${url}?cache-bust=${Date.now()}`, { cache: "reload" });
       if (!response.ok) throw new Error("Church data fetch failed");
-      await cache.put(url, response.clone());
-      await loadChurches();
+      const responseForJson = response.clone();
+      const responseForCache = response.clone();
+      const dataJson = await responseForJson.json();
+      await cache.put(url, responseForCache);
+      const version = dataJson.version || getVersionFromResponse(response) || "unknown";
+      setChurchDataVersion(version);
+      setChurchDataLastRefresh(new Date().toISOString());
+      await loadChurches(dataJson);
       showStatus("✔ Church data refreshed");
     } catch (error) {
       console.error(error);
@@ -459,6 +699,13 @@
     closeMenu();
     await refreshFullPWA();
   });
+
+  document.getElementById("aboutBtn").addEventListener("click", () => {
+    closeMenu();
+    openAboutOverlay();
+  });
+
+  document.getElementById("aboutCloseBtn").addEventListener("click", closeAboutOverlay);
 
   document.addEventListener("click", event => {
     const menu = document.getElementById("menuPanel");

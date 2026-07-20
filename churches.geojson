@@ -1,6 +1,7 @@
 {
 "type": "FeatureCollection",
 "name": "churches",
+"version": "2.0.0",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
 "features": [
 { "type": "Feature", "properties": { "fid": 1, "Contact ID": 2453, "Sort Name": "Abram St John Wigan", "Contact Subtype": null, "Church/Organisation Profile: Church Postcode": "WN2 5RQ", "Long": -2.594037, "Lat": 53.510313, "Church/Organisation Profile: Approved by IC": false, "Organisation Details: Date Trustees Approval": "28/09/2016", "Organisation Details: Welcome Email Date": null, "Denom": null, "Organisation Details: Denomination": null, "Church/Organisation Profile: Church Denomination": null }, "geometry": { "type": "Point", "coordinates": [ -2.594037, 53.510313 ] } },
