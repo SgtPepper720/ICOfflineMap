@@ -180,6 +180,201 @@
       color: #333;
     }
 
+    #helpOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(3px);
+    }
+
+    #helpOverlay.hidden {
+      display: none;
+    }
+
+    #helpPanel {
+      width: min(720px, calc(100% - 32px));
+      max-height: calc(100% - 40px);
+      overflow-y: auto;
+      background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(246,250,255,0.95));
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.24);
+      padding: 24px;
+      position: relative;
+      color: #111;
+      font-family: sans-serif;
+    }
+
+    #helpCloseBtn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.08);
+      color: #111;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .help-header {
+      margin-bottom: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
+      border: 1px solid #dce7f8;
+    }
+
+    .help-hero {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .help-hero-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0b6ea8, #3da5ff);
+      color: white;
+      font-size: 1.2rem;
+      box-shadow: 0 8px 18px rgba(13, 110, 168, 0.2);
+    }
+
+    .help-header h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+    }
+
+    .help-header p {
+      margin: 0;
+      color: #556;
+      line-height: 1.55;
+    }
+
+    .help-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .help-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #dfe9f7;
+      color: #38506b;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .help-section {
+      margin-top: 12px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fcfdff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .help-section:hover {
+      border-color: rgba(13, 110, 168, 0.2);
+      box-shadow: 0 6px 18px rgba(13, 110, 168, 0.08);
+    }
+
+    .help-section summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 600;
+      color: #14324f;
+    }
+
+    .help-section summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .help-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .help-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    .help-logo svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .help-logo.ios {
+      background: linear-gradient(135deg, #111, #666);
+    }
+
+    .help-logo.android {
+      background: linear-gradient(135deg, #2f9e44, #76c948);
+    }
+
+    .help-logo.windows {
+      background: linear-gradient(135deg, #0b6ea8, #3da5ff);
+    }
+
+    .help-body {
+      padding: 0 16px 16px;
+      color: #333;
+    }
+
+    .help-steps {
+      margin: 0 0 10px 18px;
+      padding: 0;
+      line-height: 1.65;
+    }
+
+    .help-steps li {
+      margin-bottom: 8px;
+    }
+
+    .help-tip {
+      border-left: 3px solid #3da5ff;
+      background: #f4f9ff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #2d4b67;
+      line-height: 1.6;
+    }
+
     .about-section {
       margin-top: 16px;
       padding-top: 16px;
@@ -230,6 +425,7 @@
   <div class="footer-right">
     <button id="menuToggle" aria-haspopup="true" aria-expanded="false" title="Open refresh menu">☰</button>
     <div id="menuPanel" role="menu" aria-labelledby="menuToggle">
+      <button id="helpBtn" role="menuitem">Install help</button>
       <button id="refreshTilesBtn" role="menuitem">Re-download map tiles</button>
       <button id="refreshChurchDataBtn" role="menuitem">Refresh church data</button>
       <button id="refreshAppShellBtn" role="menuitem">Refresh app shell</button>
@@ -264,6 +460,100 @@
         <p>Last refreshed: <span id="churchDataLastRefreshed">never</span></p>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="helpOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div id="helpPanel">
+    <button id="helpCloseBtn" aria-label="Close install help dialog">×</button>
+    <div class="help-header">
+      <div class="help-hero">
+        <div class="help-hero-icon" aria-hidden="true">🗺️</div>
+        <div>
+          <h2 id="helpTitle">Install this map as an app</h2>
+          <p>Use the steps below to put the offline map on your device and reopen it quickly.</p>
+        </div>
+      </div>
+      <div class="help-badges">
+        <span class="help-badge">📶 Offline ready</span>
+        <span class="help-badge">🏠 Home screen</span>
+        <span class="help-badge">🪟 Taskbar</span>
+      </div>
+    </div>
+
+    <details class="help-section" open>
+      <summary>
+        <span class="help-heading">
+          <span class="help-logo ios" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.5 2c.7 1.2 1 2.7.8 4.2-1.1.1-2.4-.2-3.2-1.1-.8-.9-1.3-2.2-1.2-3.5 1.3-.1 2.7.3 3.6 1.1Z" fill="currentColor"/>
+              <path d="M17.1 8.3c-1.1 0-2.1.6-2.6 1.5-.5.8-.7 1.8-.4 2.8.7 2.2 2.5 3.7 3.8 3.7 1.1 0 2.1-.6 2.7-1.4.6-.8.8-1.8.5-2.8-.7-2.2-2.5-3.8-4-3.8Z" fill="currentColor"/>
+              <path d="M10.2 6.2c-.7-.9-1.7-1.6-2.9-1.9-.8-.2-1.6-.3-2.4-.3-.7 0-1.4.1-2.1.3-.6.2-1.2.5-1.8.8l1.5 2.2c.6-.4 1.3-.7 2-.8 1.1-.2 2.2-.1 3.2.4l1.5-2.2Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Safari on iPhone or iPad</span>
+        </span>
+        <span>▾</span>
+      </summary>
+      <div class="help-body">
+        <ol class="help-steps">
+          <li>Open this page in Safari.</li>
+          <li>Tap the Share button and choose <strong>Add to Home Screen</strong>.</li>
+          <li>Give it a name and tap <strong>Add</strong>.</li>
+        </ol>
+        <div class="help-tip"><strong>Pin it:</strong> the app icon appears on your Home Screen. Press and hold it to move it to another page or keep it in your Dock for even faster access.</div>
+      </div>
+    </details>
+
+    <details class="help-section">
+      <summary>
+        <span class="help-heading">
+          <span class="help-logo android" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.2 4.8 5.7 2.8a.8.8 0 0 0-1.2-.2l-.9.7a.8.8 0 0 0-.3 1.2l1.6 2.2c.4-.4.9-.7 1.3-.9Z" fill="currentColor"/>
+              <path d="M16.8 4.8 18.3 2.8a.8.8 0 0 1 1.2-.2l.9.7a.8.8 0 0 1 .3 1.2l-1.6 2.2c-.4-.4-.9-.7-1.3-.9Z" fill="currentColor"/>
+              <path d="M5 8.6a7 7 0 1 1 14 0v2H5V8.6Z" fill="currentColor"/>
+              <path d="M7.4 14.6h9.2a1.4 1.4 0 0 1 1.4 1.4v1.4H6v-1.4a1.4 1.4 0 0 1 1.4-1.4Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Chrome on Android</span>
+        </span>
+        <span>▾</span>
+      </summary>
+      <div class="help-body">
+        <ol class="help-steps">
+          <li>Open this page in Chrome.</li>
+          <li>Tap the menu button and choose <strong>Install app</strong> or <strong>Add to Home screen</strong> if that option is shown.</li>
+          <li>Confirm the prompt to place the app icon on your device.</li>
+        </ol>
+        <div class="help-tip"><strong>Pin it:</strong> once installed, the icon stays on your Home Screen or in your app drawer. Long-press it and drag it to your preferred position.</div>
+      </div>
+    </details>
+
+    <details class="help-section">
+      <summary>
+        <span class="help-heading">
+          <span class="help-logo windows" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.3 10.2 4l.1 6.7H3V5.3Z" fill="currentColor"/>
+              <path d="M11.1 3.9 21 3v8.7h-9.9V3.9Z" fill="currentColor"/>
+              <path d="M3 12.3h7.3v6.7L3 17.7v-5.4Z" fill="currentColor"/>
+              <path d="M11.1 12.7H21v8.7l-9.9-1.4v-7.3Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Microsoft Edge on Windows</span>
+        </span>
+        <span>▾</span>
+      </summary>
+      <div class="help-body">
+        <ol class="help-steps">
+          <li>Open this page in Edge.</li>
+          <li>Click the three-dot menu and go to <strong>Apps</strong> &gt; <strong>Install this site as an app</strong>.</li>
+          <li>Confirm the install and allow it to open as a standalone app.</li>
+        </ol>
+        <div class="help-tip"><strong>Pin it:</strong> the app can be pinned to your taskbar or Start menu from the installed app icon, which makes it easier to open again later.</div>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -438,6 +728,14 @@
 
   function closeAboutOverlay() {
     document.getElementById("aboutOverlay").classList.add("hidden");
+  }
+
+  function openHelpOverlay() {
+    document.getElementById("helpOverlay").classList.remove("hidden");
+  }
+
+  function closeHelpOverlay() {
+    document.getElementById("helpOverlay").classList.add("hidden");
   }
 
   async function getExpectedTileCount() {
@@ -680,6 +978,11 @@
     toggleMenu();
   });
 
+  document.getElementById("helpBtn").addEventListener("click", () => {
+    closeMenu();
+    openHelpOverlay();
+  });
+
   document.getElementById("refreshTilesBtn").addEventListener("click", async () => {
     closeMenu();
     await refreshTiles();
@@ -706,6 +1009,13 @@
   });
 
   document.getElementById("aboutCloseBtn").addEventListener("click", closeAboutOverlay);
+  document.getElementById("helpCloseBtn").addEventListener("click", closeHelpOverlay);
+
+  document.getElementById("helpOverlay").addEventListener("click", event => {
+    if (event.target.id === "helpOverlay") {
+      closeHelpOverlay();
+    }
+  });
 
   document.addEventListener("click", event => {
     const menu = document.getElementById("menuPanel");
@@ -718,6 +1028,8 @@
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
       closeMenu();
+      closeAboutOverlay();
+      closeHelpOverlay();
     }
   });
 
