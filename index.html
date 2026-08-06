@@ -5,11 +5,11 @@
   <title>Offline Church Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="manifest" href="/ICOfflineMap/manifest-v2.json">
+  <link rel="manifest" href="./manifest-v2.json">
   <meta name="app-shell-version" content="2.0.2">
 
-  <link rel="stylesheet" href="/ICOfflineMap/leaflet/leaflet.css">
-  <script src="/ICOfflineMap/leaflet/leaflet.js"></script>
+  <link rel="stylesheet" href="./leaflet/leaflet.css">
+  <script src="./leaflet/leaflet.js"></script>
 
   <style>
     body, html { margin: 0; padding: 0; height: 100%; }
@@ -439,7 +439,7 @@
   <div id="aboutPanel">
     <button id="aboutCloseBtn" aria-label="Close about dialog">×</button>
     <div id="aboutHeader">
-      <img src="/ICOfflineMap/images/IC-Circle-Icon-filled.png" alt="App logo" />
+      <img src="./images/IC-Circle-Icon-filled.png" alt="App logo" />
       <div>
         <h2 id="aboutTitle">IC Offline Map</h2>
         <p class="about-subtitle">Offline-friendly mapping for inclusive churches.</p>
@@ -558,7 +558,7 @@
 </div>
 
 <div id="logoOverlay">
-  <img src="/ICOfflineMap/images/IC-Circle-Icon-filled.png" alt="Logo" />
+  <img src="./images/IC-Circle-Icon-filled.png" alt="Logo" />
 </div>
 
   <div id="map"></div>
@@ -568,6 +568,11 @@
     // App version metadata
     // -------------------------------
     const APP_SHELL_VERSION = document.querySelector('meta[name="app-shell-version"]')?.content || "2.0.0";
+    const APP_BASE_URL = new URL('./', window.location.href);
+
+    function appUrl(path) {
+      return new URL(path, APP_BASE_URL).toString();
+    }
 
     // -------------------------------
     // 1. Create the map
@@ -580,7 +585,7 @@
     // -------------------------------
     // 2. Offline tile layer
     // -------------------------------
-    L.tileLayer('/ICOfflineMap/tiles/{z}/{x}/{y}.png', {
+    L.tileLayer(appUrl('tiles/{z}/{x}/{y}.png'), {
       tileSize: 256,
       maxZoom: 14,
       maxNativeZoom: 10,
@@ -594,7 +599,7 @@
     let churchLayer = null;
 
     async function loadChurches(data = null) {
-      const source = '/ICOfflineMap/churches.geojson';
+      const source = appUrl('churches.geojson');
       let responseData = data;
 
       if (!responseData) {
@@ -683,12 +688,13 @@
 
   function ensureShellVersionInfo() {
     const info = getStoredVersionInfo();
+    const shellUrl = appUrl('index.html');
     if (!info.shell || Object.keys(info.shell).length === 0) {
       info.shell = info.shell || {};
-      info.shell["/ICOfflineMap/index.html"] = APP_SHELL_VERSION;
+      info.shell[shellUrl] = APP_SHELL_VERSION;
       saveStoredVersionInfo(info);
-    } else if (!info.shell["/ICOfflineMap/index.html"]) {
-      info.shell["/ICOfflineMap/index.html"] = APP_SHELL_VERSION;
+    } else if (!info.shell[shellUrl]) {
+      info.shell[shellUrl] = APP_SHELL_VERSION;
       saveStoredVersionInfo(info);
     }
   }
@@ -740,7 +746,7 @@
   }
 
   async function getExpectedTileCount() {
-    const response = await fetch("/ICOfflineMap/tiles.json");
+    const response = await fetch(appUrl('tiles.json'));
     const tileList = await response.json();
     return tileList.length;
   }
@@ -786,7 +792,7 @@
   async function precacheTiles() {
     const cache = await caches.open(CACHE_NAME);
 
-    const response = await fetch("/ICOfflineMap/tiles.json");
+    const response = await fetch(appUrl('tiles.json'));
     const tileList = await response.json();
 
     let completed = 0;
@@ -815,7 +821,7 @@
   <script>
   // ⭐ Now register the service worker ⭐
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/ICOfflineMap/service-worker.js")
+    navigator.serviceWorker.register('./service-worker.js')
       .then(() => console.log("Service worker registered"));
   }
 
@@ -864,11 +870,11 @@
 }
 
   const SHELL_FILES = [
-    "/ICOfflineMap/index.html",
-    "/ICOfflineMap/leaflet/leaflet.css",
-    "/ICOfflineMap/leaflet/leaflet.js",
-    "/ICOfflineMap/service-worker.js",
-    "/ICOfflineMap/manifest-v2.json"
+    appUrl('index.html'),
+    appUrl('leaflet/leaflet.css'),
+    appUrl('leaflet/leaflet.js'),
+    appUrl('service-worker.js'),
+    appUrl('manifest-v2.json')
   ];
 
   function toggleMenu() {
@@ -898,7 +904,7 @@
       const response = await fetch(cacheBustedUrl, { cache: "reload" });
       if (response.ok) {
         await cache.put(url, response.clone());
-        const version = getVersionFromResponse(response) || (url === "/ICOfflineMap/index.html" ? APP_SHELL_VERSION : "unknown");
+        const version = getVersionFromResponse(response) || (url === appUrl('index.html') ? APP_SHELL_VERSION : "unknown");
         setShellVersion(url, version);
       }
     }
@@ -914,7 +920,7 @@
 
   async function refreshChurchData() {
     const cache = await caches.open(CACHE_NAME);
-    const url = "/ICOfflineMap/churches.geojson";
+    const url = appUrl('churches.geojson');
 
     try {
       showStatus("Refreshing church data…");

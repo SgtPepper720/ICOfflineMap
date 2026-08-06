@@ -1,17 +1,17 @@
 const CACHE_NAME = "ic-offline-map-v2";
-const PREFIX = "/ICOfflineMap/";
+const PREFIX = "./";
 
 const OFFLINE_FILES = [
-  PREFIX + "index.html",
-  PREFIX + "manifest-v2.json",
-  PREFIX + "churches.geojson",
-  PREFIX + "leaflet/leaflet.css",
-  PREFIX + "leaflet/leaflet.js",
-  PREFIX + "leaflet/images/marker-icon.png",
-  PREFIX + "leaflet/images/marker-icon-2x.png",
-  PREFIX + "images/IC-Circle-Icon-filled.png",
-  PREFIX + "images/IC-Circle-Icon-filled-192.png",
-  PREFIX + "leaflet/images/marker-shadow.png"
+  new URL('./index.html', self.location.href).toString(),
+  new URL('./manifest-v2.json', self.location.href).toString(),
+  new URL('./churches.geojson', self.location.href).toString(),
+  new URL('./leaflet/leaflet.css', self.location.href).toString(),
+  new URL('./leaflet/leaflet.js', self.location.href).toString(),
+  new URL('./leaflet/images/marker-icon.png', self.location.href).toString(),
+  new URL('./leaflet/images/marker-icon-2x.png', self.location.href).toString(),
+  new URL('./images/IC-Circle-Icon-filled.png', self.location.href).toString(),
+  new URL('./images/IC-Circle-Icon-filled-192.png', self.location.href).toString(),
+  new URL('./leaflet/images/marker-shadow.png', self.location.href).toString()
 ];
 
 // Install and cache core files
@@ -55,7 +55,7 @@ self.addEventListener("fetch", event => {
             return fetchRes;
           });
         })
-        .catch(() => caches.match(PREFIX + "index.html"))
+        .catch(() => caches.match(new URL('./index.html', self.location.href)))
     );
     return;
   }
