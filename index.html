@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="manifest" href="/ICOfflineMap/manifest-v2.json">
-  <meta name="app-shell-version" content="2.0.1">
+  <meta name="app-shell-version" content="2.0.2">
 
   <link rel="stylesheet" href="/ICOfflineMap/leaflet/leaflet.css">
   <script src="/ICOfflineMap/leaflet/leaflet.js"></script>
@@ -636,6 +636,7 @@
 <script>
 // script for page-side tile caching logic 
   const VERSION_STORAGE_KEY = "ICOfflineMapVersionInfo";
+  const CACHE_NAME = "ic-offline-map-v2";
 
   function getStoredVersionInfo() {
     try {
@@ -761,7 +762,7 @@
   }
 
   async function checkTileCache() {
-    const cache = await caches.open("ic-offline-map-v1");
+    const cache = await caches.open(CACHE_NAME);
     const keys = await cache.keys();
     const expected = await getExpectedTileCount();
 
@@ -783,7 +784,7 @@
   }
 
   async function precacheTiles() {
-    const cache = await caches.open("ic-offline-map-v1");
+    const cache = await caches.open(CACHE_NAME);
 
     const response = await fetch("/ICOfflineMap/tiles.json");
     const tileList = await response.json();
@@ -890,7 +891,7 @@
   }
 
   async function refreshShellCache() {
-    const cache = await caches.open("ic-offline-map-v1");
+    const cache = await caches.open(CACHE_NAME);
 
     for (const url of SHELL_FILES) {
       const cacheBustedUrl = `${url}?cache-bust=${Date.now()}`;
@@ -905,14 +906,14 @@
   }
 
   async function refreshTiles() {
-    const cache = await caches.open("ic-offline-map-v1");
+    const cache = await caches.open(CACHE_NAME);
     await deleteOnlyTiles(cache);
     showStatus("Re-downloading offline map tiles…");
     await precacheTiles();
   }
 
   async function refreshChurchData() {
-    const cache = await caches.open("ic-offline-map-v1");
+    const cache = await caches.open(CACHE_NAME);
     const url = "/ICOfflineMap/churches.geojson";
 
     try {
@@ -960,7 +961,7 @@
       await refreshShellCache();
       const cacheNames = await caches.keys();
       for (const cacheName of cacheNames) {
-        if (cacheName === "ic-offline-map-v1") {
+        if (cacheName === CACHE_NAME || cacheName === "ic-offline-map-v1") {
           await caches.delete(cacheName);
         }
       }
