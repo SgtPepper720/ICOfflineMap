@@ -571,7 +571,8 @@
     const APP_BASE_URL = new URL('./', window.location.href);
 
     function appUrl(path) {
-      return new URL(path, APP_BASE_URL).toString();
+      const url = new URL(path, APP_BASE_URL).toString();
+      return url.replace(/%7B/g, '{').replace(/%7D/g, '}');
     }
 
     async function ensureLatestShell() {
