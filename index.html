@@ -427,7 +427,7 @@
     <div id="menuPanel" role="menu" aria-labelledby="menuToggle">
       <button id="helpBtn" role="menuitem">Help with Installation</button>
       <button id="refreshTilesBtn" role="menuitem">Re-download map tiles</button>
-      <button id="refreshChurchDataBtn" role="menuitem">Refresh church data</button>
+      <button id="refreshChurchDataBtn" role="menuitem">Refresh Church Data (0)</button>
       <button id="refreshAppShellBtn" role="menuitem">Refresh app shell</button>
       <button id="refreshPwaBtn" role="menuitem">Refresh full Web App</button>
       <button id="aboutBtn" role="menuitem">About</button>
@@ -618,6 +618,13 @@
     // -------------------------------
     let churchLayer = null;
 
+    function updateChurchDataButtonLabel(count) {
+      const button = document.getElementById("refreshChurchDataBtn");
+      if (button) {
+        button.textContent = `Refresh Church Data (${count})`;
+      }
+    }
+
     async function loadChurches(data = null) {
       const source = appUrl('churches.geojson');
       let responseData = data;
@@ -631,6 +638,9 @@
       } else if (responseData.version) {
         setChurchDataVersion(responseData.version);
       }
+
+      const churchCount = Array.isArray(responseData?.features) ? responseData.features.length : 0;
+      updateChurchDataButtonLabel(churchCount);
 
       if (churchLayer) {
         map.removeLayer(churchLayer);
