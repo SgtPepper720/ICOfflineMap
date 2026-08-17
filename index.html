@@ -601,11 +601,13 @@
       maxZoom: 14
     });
 
+    // Fit to the actual offline tile coverage, not the full church dataset.
+    // The church data includes outliers and would otherwise zoom the map out too far.
     map.fitBounds([
-      [49.0, -8.5],
-      [60.0, 2.5]
+      [49.0, -14.5],
+      [60.8, 5.4]
     ], {
-      padding: [20, 20],
+      padding: [14, 14],
       maxZoom: 8
     });
 
@@ -671,14 +673,6 @@
           layer.bindPopup(html);
         }
       }).addTo(map);
-
-      const bounds = churchLayer.getBounds();
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, {
-          padding: [20, 20],
-          maxZoom: 8
-        });
-      }
     }
 
     loadChurches();
