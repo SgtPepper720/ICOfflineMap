@@ -5,6 +5,7 @@ const OFFLINE_FILES = [
   new URL('./index.html', self.location.href).toString(),
   new URL('./manifest-v2.json', self.location.href).toString(),
   new URL('./churches.geojson', self.location.href).toString(),
+  new URL('./towns.json', self.location.href).toString(),
   new URL('./leaflet/leaflet.css', self.location.href).toString(),
   new URL('./leaflet/leaflet.js', self.location.href).toString(),
   new URL('./leaflet/images/marker-icon.png', self.location.href).toString(),

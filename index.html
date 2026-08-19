@@ -105,6 +105,113 @@
       display: flex;
     }
 
+    #townSearchOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(3px);
+    }
+
+    #townSearchOverlay.hidden {
+      display: none;
+    }
+
+    #townSearchPanel {
+      width: min(480px, calc(100% - 32px));
+      max-height: calc(100% - 40px);
+      overflow-y: auto;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 16px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+      padding: 24px;
+      position: relative;
+      color: #111;
+      font-family: sans-serif;
+    }
+
+    #townSearchPanel h2 {
+      margin: 0 40px 6px 0;
+      font-size: 1.25rem;
+    }
+
+    #townSearchPanel p {
+      margin: 0 0 16px;
+      color: #555;
+    }
+
+    #townSearchCloseBtn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.08);
+      color: #111;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    #townSearchForm {
+      display: flex;
+      gap: 8px;
+    }
+
+    #townSearchInput {
+      min-width: 0;
+      flex: 1;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      padding: 10px;
+      font: inherit;
+    }
+
+    #townSearchForm button[type="submit"] {
+      border: 1px solid #0b6ea8;
+      border-radius: 4px;
+      background: #0b6ea8;
+      color: white;
+      padding: 0 14px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #townSearchResults {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 12px;
+    }
+
+    #townSearchResults button {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      color: #111;
+      padding: 9px 10px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #townSearchResults button:hover,
+    #townSearchResults button:focus {
+      background: #f1f7fb;
+      border-color: #0b6ea8;
+    }
+
+    #townSearchMessage {
+      margin-top: 12px;
+      color: #555;
+    }
+
     #aboutOverlay {
       position: fixed;
       inset: 0;
@@ -426,12 +533,27 @@
     <button id="menuToggle" aria-haspopup="true" aria-expanded="false" title="Open refresh menu">☰</button>
     <div id="menuPanel" role="menu" aria-labelledby="menuToggle">
       <button id="helpBtn" role="menuitem">Help with Installation</button>
+      <button id="townSearchBtn" role="menuitem">Town search</button>
       <button id="refreshTilesBtn" role="menuitem">Re-download map tiles</button>
       <button id="refreshChurchDataBtn" role="menuitem">Refresh Church Data (0)</button>
       <button id="refreshAppShellBtn" role="menuitem">Refresh app shell</button>
       <button id="refreshPwaBtn" role="menuitem">Refresh full Web App</button>
       <button id="aboutBtn" role="menuitem">About</button>
     </div>
+  </div>
+</div>
+
+<div id="townSearchOverlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="townSearchTitle">
+  <div id="townSearchPanel">
+    <button id="townSearchCloseBtn" aria-label="Close town search">×</button>
+    <h2 id="townSearchTitle">Town search</h2>
+    <p>Search for a town to centre the map there.</p>
+    <form id="townSearchForm">
+      <input id="townSearchInput" type="search" placeholder="Enter a town name" autocomplete="off" aria-label="Town name" />
+      <button type="submit">Search</button>
+    </form>
+    <div id="townSearchResults" role="listbox" aria-label="Matching towns"></div>
+    <div id="townSearchMessage" role="status" aria-live="polite"></div>
   </div>
 </div>
 
@@ -569,6 +691,7 @@
     // -------------------------------
     const APP_SHELL_VERSION = document.querySelector('meta[name="app-shell-version"]')?.content || "2.0.0";
     const APP_BASE_URL = new URL('./', window.location.href);
+    let towns = [];
 
     function appUrl(path) {
       const url = new URL(path, APP_BASE_URL).toString();
@@ -785,6 +908,77 @@
     document.getElementById("helpOverlay").classList.add("hidden");
   }
 
+  async function openTownSearchOverlay() {
+    document.getElementById("townSearchOverlay").classList.remove("hidden");
+    const input = document.getElementById("townSearchInput");
+    input.focus();
+
+    if (towns.length > 0) return;
+
+    const message = document.getElementById("townSearchMessage");
+    message.textContent = "Loading towns…";
+    try {
+      const response = await fetch(appUrl('towns.json'));
+      if (!response.ok) throw new Error("Town data fetch failed");
+      towns = await response.json();
+      message.textContent = "";
+      updateTownSearchResults();
+    } catch (error) {
+      console.error(error);
+      message.textContent = "Town data could not be loaded. Please try again later.";
+    }
+  }
+
+  function closeTownSearchOverlay() {
+    document.getElementById("townSearchOverlay").classList.add("hidden");
+  }
+
+  function updateTownSearchResults() {
+    const input = document.getElementById("townSearchInput");
+    const results = document.getElementById("townSearchResults");
+    const message = document.getElementById("townSearchMessage");
+    const query = input.value.trim().toLocaleLowerCase();
+    results.replaceChildren();
+
+    if (!query) {
+      message.textContent = "Start typing to see matching towns.";
+      return;
+    }
+
+    const matches = towns
+      .filter(town => town.name.toLocaleLowerCase().includes(query))
+      .slice(0, 12);
+
+    matches.forEach(town => {
+      const result = document.createElement("button");
+      result.type = "button";
+      result.role = "option";
+      result.textContent = town.name;
+      result.addEventListener("click", () => selectTown(town));
+      results.appendChild(result);
+    });
+
+    message.textContent = matches.length > 0
+      ? `${matches.length}${matches.length === 12 ? "+" : ""} matching town${matches.length === 1 ? "" : "s"}`
+      : "Town not found. Please try another town.";
+  }
+
+  function selectTown(town) {
+    map.setView([town.lat, town.lon], 12);
+    closeTownSearchOverlay();
+    showStatus(`Showing ${town.name}`);
+  }
+
+  function submitTownSearch() {
+    const query = document.getElementById("townSearchInput").value.trim().toLocaleLowerCase();
+    const match = towns.find(town => town.name.toLocaleLowerCase() === query);
+    if (match) {
+      selectTown(match);
+    } else {
+      updateTownSearchResults();
+    }
+  }
+
   async function getExpectedTileCount() {
     const response = await fetch(appUrl('tiles.json'));
     const tileList = await response.json();
@@ -917,6 +1111,7 @@
     appUrl('leaflet/leaflet.css'),
     appUrl('leaflet/leaflet.js'),
     appUrl('service-worker.js'),
+    appUrl('towns.json'),
     appUrl('manifest-v2.json')
   ];
 
@@ -1033,6 +1228,11 @@
     openHelpOverlay();
   });
 
+  document.getElementById("townSearchBtn").addEventListener("click", () => {
+    closeMenu();
+    openTownSearchOverlay();
+  });
+
   document.getElementById("refreshTilesBtn").addEventListener("click", async () => {
     closeMenu();
     await refreshTiles();
@@ -1060,10 +1260,22 @@
 
   document.getElementById("aboutCloseBtn").addEventListener("click", closeAboutOverlay);
   document.getElementById("helpCloseBtn").addEventListener("click", closeHelpOverlay);
+  document.getElementById("townSearchCloseBtn").addEventListener("click", closeTownSearchOverlay);
+  document.getElementById("townSearchInput").addEventListener("input", updateTownSearchResults);
+  document.getElementById("townSearchForm").addEventListener("submit", event => {
+    event.preventDefault();
+    submitTownSearch();
+  });
 
   document.getElementById("helpOverlay").addEventListener("click", event => {
     if (event.target.id === "helpOverlay") {
       closeHelpOverlay();
+    }
+  });
+
+  document.getElementById("townSearchOverlay").addEventListener("click", event => {
+    if (event.target.id === "townSearchOverlay") {
+      closeTownSearchOverlay();
     }
   });
 
@@ -1080,6 +1292,7 @@
       closeMenu();
       closeAboutOverlay();
       closeHelpOverlay();
+      closeTownSearchOverlay();
     }
   });
 
