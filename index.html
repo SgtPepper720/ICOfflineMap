@@ -1122,6 +1122,7 @@
     appUrl('leaflet/leaflet.js'),
     appUrl('service-worker.js'),
     appUrl('towns.json'),
+    appUrl('places_urls.json'),
     appUrl('manifest-v2.json')
   ];
 
@@ -1169,15 +1170,20 @@
   async function refreshChurchData() {
     const cache = await caches.open(CACHE_NAME);
     const url = appUrl('churches.geojson');
+    const placesUrl = appUrl('places_urls.json');
 
     try {
       showStatus("Refreshing church data…");
       const response = await fetch(`${url}?cache-bust=${Date.now()}`, { cache: "reload" });
       if (!response.ok) throw new Error("Church data fetch failed");
+      const placesResponse = await fetch(`${placesUrl}?cache-bust=${Date.now()}`, { cache: "reload" });
+      if (!placesResponse.ok) throw new Error("Place URL data fetch failed");
       const responseForJson = response.clone();
       const responseForCache = response.clone();
       const dataJson = await responseForJson.json();
+      const placesForCache = placesResponse.clone();
       await cache.put(url, responseForCache);
+      await cache.put(placesUrl, placesForCache);
       const version = dataJson.version || getVersionFromResponse(response) || "unknown";
       setChurchDataVersion(version);
       setChurchDataLastRefresh(new Date().toISOString());
