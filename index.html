@@ -761,6 +761,11 @@
     async function loadChurches(data = null) {
       const source = appUrl('churches.geojson');
       let responseData = data;
+      const placesResponse = await fetch(appUrl('places_urls.json'));
+      const placesData = await placesResponse.json();
+      const placeUrlsById = new Map(
+        placesData.map(place => [String(place.externalID), place.url])
+      );
 
       if (!responseData) {
         const response = await fetch(source);
@@ -786,11 +791,16 @@
           const churchName = p["Sort Name"] || "Unnamed church";
           const denom = p["Denom"] ? p["Denom"] : "unavailable";
           const postcode = p["Church/Organisation Profile: Church Postcode"] || "unavailable";
+          const placeUrl = placeUrlsById.get(String(p["field_13"]));
+          const placeLink = placeUrl
+            ? `<strong>Website:</strong> <a href="${placeUrl}" target="_blank" rel="noopener noreferrer">${placeUrl}</a><br>`
+            : "";
 
           const html = `
                 <strong>Church:</strong> ${churchName}<br>
                 <strong>Denomination:</strong> ${denom}<br>
-                <strong>Postcode:</strong> ${postcode}
+                <strong>Postcode:</strong> ${postcode}<br>
+                ${placeLink}
             `;
 
           layer.bindPopup(html);
